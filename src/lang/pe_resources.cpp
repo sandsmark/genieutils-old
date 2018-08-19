@@ -463,7 +463,7 @@ public:
 void rebuild_resource_directory(pe_base& pe, section& resource_section, resource_directory& root, uint32_t& current_structures_pos, uint32_t& current_data_pos, uint32_t& current_strings_pos, uint32_t offset_from_section_start)
 {
 	//Create resource directory
-	image_resource_directory dir = {0};
+    image_resource_directory dir{};
 	dir.Characteristics = root.get_characteristics();
 	dir.MajorVersion = root.get_major_version();
 	dir.MinorVersion = root.get_minor_version();
@@ -523,7 +523,7 @@ void rebuild_resource_directory(pe_base& pe, section& resource_section, resource
 		if((*it).includes_data())
 		{
 			current_data_pos = pe_utils::align_up(current_data_pos, sizeof(uint32_t));
-			image_resource_data_entry data_entry = {0};
+            image_resource_data_entry data_entry{};
 			data_entry.CodePage = (*it).get_data_entry().get_codepage();
 			data_entry.Size = static_cast<uint32_t>((*it).get_data_entry().get_data().length());
 			data_entry.OffsetToData = pe.rva_from_section_offset(resource_section, current_data_pos + sizeof(data_entry));

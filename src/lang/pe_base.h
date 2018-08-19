@@ -492,7 +492,7 @@ private:
 	//PointerToRawData; Data
 	debug_data_list debug_data_;
 	//PE or PE+ related properties
-	pe_properties* props_;
+        std::shared_ptr<pe_properties> props_;
 
 	//Reads and checks DOS header
 	void read_dos_header(std::istream& file);

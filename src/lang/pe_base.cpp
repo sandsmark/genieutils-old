@@ -16,7 +16,7 @@ using namespace pe_win;
 //Constructor
 pe_base::pe_base(std::istream& file, const pe_properties& props, bool read_debug_raw_data)
 {
-	props_ = props.duplicate().release();
+    props_ = props.duplicate();
 
 	//Save istream state
 	std::ios_base::iostate state = file.exceptions();
@@ -47,7 +47,7 @@ pe_base::pe_base(std::istream& file, const pe_properties& props, bool read_debug
 
 pe_base::pe_base(const pe_properties& props, uint32_t section_alignment, bool dll, uint16_t subsystem)
 {
-	props_ = props.duplicate().release();
+    props_ = props.duplicate();
 	props_->create_pe(section_alignment, subsystem);
 
 	has_overlay_ = false;
@@ -83,7 +83,7 @@ pe_base::pe_base(const pe_base& pe)
 	debug_data_(pe.debug_data_),
 	props_(0)
 {
-	props_ = pe.props_->duplicate().release();
+    props_ = pe.props_->duplicate();
 }
 
 pe_base& pe_base::operator=(const pe_base& pe)
@@ -94,16 +94,14 @@ pe_base& pe_base::operator=(const pe_base& pe)
 	has_overlay_ = pe.has_overlay_;
 	full_headers_data_ = pe.full_headers_data_;
 	debug_data_ = pe.debug_data_;
-	delete props_;
-	props_ = 0;
-	props_ = pe.props_->duplicate().release();
+    props_.reset();
+    props_ = pe.props_->duplicate();
 
 	return *this;
 }
 
 pe_base::~pe_base()
 {
-	delete props_;
 }
 
 //Returns dos header

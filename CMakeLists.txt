@@ -93,6 +93,12 @@ set(FILE_SRC
 
 set(LANG_SRC ${PCRIO_SRC}
     src/lang/LangFile.cpp
+    src/lang/pe_base.cpp
+    src/lang/pe_directory.cpp
+    src/lang/pe_exception.cpp
+    src/lang/pe_resources.cpp
+    src/lang/pe_properties.cpp
+    src/lang/pe_section.cpp
 )
 
 if (WIN32)
