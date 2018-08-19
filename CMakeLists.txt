@@ -99,6 +99,9 @@ set(LANG_SRC ${PCRIO_SRC}
     src/lang/pe_resources.cpp
     src/lang/pe_properties.cpp
     src/lang/pe_section.cpp
+    src/lang/pe_properties_generic.cpp
+    src/lang/pe_utils.cpp
+    src/lang/pe_rebuilder.cpp
 )
 
 if (WIN32)

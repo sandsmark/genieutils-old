@@ -6,7 +6,7 @@
 #include <map>
 #include "pe_exception.h"
 #include "pe_structures.h"
-#include "utils.h"
+#include "pe_utils.h"
 #include "pe_section.h"
 #include "pe_properties.h"
 

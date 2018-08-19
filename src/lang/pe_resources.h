@@ -138,6 +138,8 @@ public:
     //Returns resource_directory_entry by name. If not found - throws an exception
     const resource_directory_entry &entry_by_name(const std::wstring &name) const;
 
+    void remove_entry(uint32_t id);
+
 public: //These functions do not change everything inside image, they are used by PE class
     //You can also use them to rebuild resource directory
 

@@ -22,23 +22,30 @@
 
 #include <genie/file/IFile.h>
 #include <genie/util/Logger.h>
-#include <iconv.h> //Sorry no iconv for msvc
+#include <memory>
+#include <iconv.h>
 
 struct pcr_file;
 
+namespace pe_bliss
+{
+class pe_base;
+class resource_directory;
+}//namespace pe_bliss
+
 namespace genie {
 
-class PcrioError : public std::ios::failure
-{
-public:
-    explicit PcrioError(int error);
-    int getError(void) const { return error_; }
+//class PcrioError : public std::ios::failure
+//{
+//public:
+//    explicit PcrioError(int error);
+//    int getError(void) const { return error_; }
 
-    static void check(int error);
+//    static void check(int error);
 
-private:
-    int error_;
-};
+//private:
+//    int error_;
+//};
 
 class IconvError : public std::ios::failure
 {
@@ -55,8 +62,8 @@ public:
     LangFile();
     virtual ~LangFile();
 
-    virtual void load(std::string fileName) override;
-    virtual void saveAs(const char *fileName) override;
+//    virtual void load(std::string fileName) override;
+//    virtual void saveAs(const char *fileName) override;
 
     // get/set strings in default_charset (utf-8)
     std::string getString(unsigned int id);
@@ -69,12 +76,13 @@ public:
 protected:
     virtual void unload(void) override;
 
-    virtual void serializeObject(void) override {}
+    void serializeObject(void) override;
 
 private:
     static Logger &log;
 
-    struct pcr_file *pfile_;
+    std::unique_ptr<pe_bliss::pe_base> m_peFile;
+    std::unique_ptr<pe_bliss::resource_directory> m_resourceDirectory;
 
     uint32_t defaultCultureId_;
     uint32_t defaultCodepage_;

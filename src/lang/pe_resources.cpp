@@ -685,4 +685,12 @@ const resource_directory_entry &resource_directory::entry_by_name(const std::wst
 
     return *i;
 }
+
+void resource_directory::remove_entry(uint32_t id)
+{
+    entry_list::const_iterator i = std::find_if(entries_.begin(), entries_.end(), id_entry_finder(id));
+    if (i != entries_.end()) {
+        entries_.erase(i);
+    }
+}
 }

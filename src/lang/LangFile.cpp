@@ -24,9 +24,15 @@
 #include <iconv.h>
 #include <errno.h>
 
-extern "C" {
-#include <pcrio.h>
-}
+#include "pe_base.h"
+#include "pe_directory.h"
+#include "pe_resources.h"
+#include "pe_properties_generic.h"
+#include "pe_structures.h"
+#include "pe_rebuilder.h"
+//extern "C" {
+//#include <pcrio.h>
+//}
 
 namespace genie {
 
@@ -34,29 +40,29 @@ const char *LangFile::CONV_DEFAULT_CHARSET = "UTF-8";
 
 Logger &LangFile::log = Logger::getLogger("freeaoe.LangFile");
 
-//------------------------------------------------------------------------------
-PcrioError::PcrioError(int error) :
-    std::ios::failure(pcr_error_message((pcr_error_code)error)), error_(error)
-{
-}
+////------------------------------------------------------------------------------
+//PcrioError::PcrioError(int error) :
+//    std::ios::failure(pcr_error_message((pcr_error_code)error)), error_(error)
+//{
+//}
 
-//------------------------------------------------------------------------------
-void PcrioError::check(int error)
-{
-    switch (error) {
-    case PCR_ERROR_NONE:
-        return;
-    case PCR_ERROR_BAD_ALLOC:
-        throw std::bad_alloc();
-    default:
-        throw PcrioError(error);
-    }
-}
+////------------------------------------------------------------------------------
+//void PcrioError::check(int error)
+//{
+//    switch (error) {
+//    case PCR_ERROR_NONE:
+//        return;
+//    case PCR_ERROR_BAD_ALLOC:
+//        throw std::bad_alloc();
+//    default:
+//        throw PcrioError(error);
+//    }
+//}
 
 //------------------------------------------------------------------------------
 LangFile::LangFile()
 {
-    pfile_ = 0;
+//    pfile_ = 0;
 
     defaultCultureId_ = 0;
     defaultCodepage_ = 0;
@@ -76,20 +82,22 @@ LangFile::~LangFile()
     if (fromDefaultCharsetCd_)
         iconv_close(fromDefaultCharsetCd_);
 
-    if (pfile_)
-        pcr_free(pfile_);
+//    if (pfile_)
+//        pcr_free(pfile_);
 }
 
 //------------------------------------------------------------------------------
+#if 0
 void LangFile::load(std::string filename)
 {
-    pcr_error_code errorCode_ = PCR_ERROR_NONE;
+//    pcr_error_code errorCode_ = PCR_ERROR_NONE;
 
     setFileName(filename);
 
     log.info("-------");
     log.info("Loading \"%s\"", filename);
 
+    m_peFile = std::make_unique<pe_bliss::pe_base>();
     if (pfile_)
         pcr_free(pfile_);
 
@@ -142,89 +150,106 @@ void LangFile::load(std::string filename)
         }
     }
 }
+#endif
 
 //------------------------------------------------------------------------------
-void LangFile::saveAs(const char *filename)
-{
-    pcr_error_code errorCode = PCR_ERROR_NONE;
+//void LangFile::saveAs(const char *filename)
+//{
+//    pcr_error_code errorCode = PCR_ERROR_NONE;
 
-    if (pfile_ == 0)
-        throw std::ios_base::failure("Save: Can't save unloaded file: "
-                                     + std::string(filename));
+//    if (pfile_ == 0)
+//        throw std::ios_base::failure("Save: Can't save unloaded file: "
+//                                     + std::string(filename));
 
-    pcr_write_file(filename, pfile_, &errorCode);
+//    pcr_write_file(filename, pfile_, &errorCode);
 
-    PcrioError::check(errorCode);
-}
+//    PcrioError::check(errorCode);
+//}
 
 //----------------------------------------------------------------------------
 std::string LangFile::getString(unsigned int id)
 {
-    std::string encodedStr, decodedStr;
-    char *strBuf;
-    int strBufSize = pcr_get_strlenL(pfile_, id, defaultCultureId_) + 1;
-
-    if (strBufSize <= 1) {
-        log.debug("%s: String [%d] not found!", getFileName(), id);
-        return std::string("");
+    if (!m_peFile) {
+        serializeObject();        // hack
     }
+    const pe_bliss::resource_data_entry &entry = m_resourceDirectory->entry_by_id(id).get_data_entry();
+    return convertFrom(entry.get_data(), entry.get_codepage());
 
-    strBuf = new char[strBufSize];
+//    std::string encodedStr, decodedStr;
+//    char *strBuf;
+//    int strBufSize = pcr_get_strlenL(pfile_, id, defaultCultureId_) + 1;
 
-    log.info("%s: getString(%d);", getFileName(), id);
+//    if (strBufSize <= 1) {
+//        log.debug("%s: String [%d] not found!", getFileName(), id);
+//        return std::string("");
+//    }
 
-    int flag = pcr_get_stringL(pfile_, id, defaultCultureId_, strBuf, strBufSize);
+//    strBuf = new char[strBufSize];
 
-    encodedStr = std::string(strBuf, strBufSize - 1); // excluding \0
+//    log.info("%s: getString(%d);", getFileName(), id);
 
-    int codepage;
+//    int flag = pcr_get_stringL(pfile_, id, defaultCultureId_, strBuf, strBufSize);
 
-    if (flag) {
-        codepage = pcr_get_codepageL(pfile_, id, defaultCultureId_);
+//    encodedStr = std::string(strBuf, strBufSize - 1); // excluding \0
 
-        log.info("Codepage differs, loading converter for cp [%d]", codepage);
-    } else {
-        codepage = defaultCodepage_;
-    }
+//    int codepage;
 
-    decodedStr = convertFrom(encodedStr, codepage);
+//    if (flag) {
+//        codepage = pcr_get_codepageL(pfile_, id, defaultCultureId_);
 
-    log.info("| Result: \"%s\"", decodedStr.c_str());
+//        log.info("Codepage differs, loading converter for cp [%d]", codepage);
+//    } else {
+//        codepage = defaultCodepage_;
+//    }
 
-    delete[] strBuf;
+//    decodedStr = convertFrom(encodedStr, codepage);
 
-    return decodedStr;
+//    log.info("| Result: \"%s\"", decodedStr.c_str());
+
+//    delete[] strBuf;
+
+//    return decodedStr;
 }
 
 //----------------------------------------------------------------------------
 void LangFile::setString(unsigned int id, std::string str)
 {
-    std::string encodedStr;
+    pe_bliss::resource_data_entry data(convertTo(str, defaultCodepage_), defaultCodepage_);
 
-    log.info("%s: setString(%d, %s);", getFileName(), id, str.c_str());
+    pe_bliss::resource_directory_entry entry;
+    entry.set_id(id);
+    entry.add_data_entry(data);
+    m_resourceDirectory->remove_entry(id);
+    m_resourceDirectory->add_resource_directory_entry(entry);
 
-    encodedStr = convertTo(str, defaultCodepage_);
 
-    log.info("| Convert from \"%s\" to \"%s\".", str.c_str(), encodedStr.c_str());
+//    pe_bliss::resource_directory::entry_list::const_iterator i = std::find_if(begin(), entries_.end(), name_entry_finder(name));
+//    std::string encodedStr;
 
-    struct pcr_language lang;
-    lang.id = defaultCultureId_;
-    lang.codepage = defaultCodepage_;
+//    log.info("%s: setString(%d, %s);", getFileName(), id, str.c_str());
 
-    int err = pcr_set_stringC(pfile_, id, lang, encodedStr.c_str());
+//    encodedStr = convertTo(str, defaultCodepage_);
 
-    if (err > 0)
-        PcrioError::check(err);
-    else if (err == -1) // wrong codepage
-    {
-        log.info("Trying to rewrite string converted to wrong codepage");
+//    log.info("| Convert from \"%s\" to \"%s\".", str.c_str(), encodedStr.c_str());
 
-        lang.codepage = pcr_get_codepageL(pfile_, id, lang.id);
+//    struct pcr_language lang;
+//    lang.id = defaultCultureId_;
+//    lang.codepage = defaultCodepage_;
 
-        encodedStr = convertTo(str, lang.codepage);
+//    int err = pcr_set_stringC(pfile_, id, lang, encodedStr.c_str());
 
-        PcrioError::check(pcr_set_stringC(pfile_, id, lang, encodedStr.c_str()));
-    }
+//    if (err > 0)
+//        PcrioError::check(err);
+//    else if (err == -1) // wrong codepage
+//    {
+//        log.info("Trying to rewrite string converted to wrong codepage");
+
+//        lang.codepage = pcr_get_codepageL(pfile_, id, lang.id);
+
+//        encodedStr = convertTo(str, lang.codepage);
+
+//        PcrioError::check(pcr_set_stringC(pfile_, id, lang, encodedStr.c_str()));
+//    }
 }
 
 void LangFile::setDefaultCharset(const char *charset)
@@ -235,10 +260,23 @@ void LangFile::setDefaultCharset(const char *charset)
 //----------------------------------------------------------------------------
 void LangFile::unload(void)
 {
-    if (pfile_)
-        pcr_free(pfile_);
+    m_peFile.reset();
+    m_resourceDirectory.reset();
+}
 
-    pfile_ = 0;
+void LangFile::serializeObject()
+{
+    if (!m_peFile) {
+        m_peFile = std::make_unique<pe_bliss::pe_base>(*getIStream(), pe_bliss::pe_properties_32());
+        m_resourceDirectory = std::make_unique<pe_bliss::resource_directory>(pe_bliss::get_resources(*m_peFile));
+    }
+
+
+    if (isOperation(OP_WRITE)) {
+        uint32_t res_rva = m_peFile->get_directory_rva(pe_bliss::pe_win::image_directory_entry_resource);
+        pe_bliss::rebuild_resources(*m_peFile, *m_resourceDirectory, m_peFile->section_from_rva(res_rva));
+        pe_bliss::rebuild_pe(*m_peFile, *getOStream());
+    }
 }
 
 //----------------------------------------------------------------------------

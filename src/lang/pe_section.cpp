@@ -1,5 +1,5 @@
 #include <string.h>
-#include "utils.h"
+#include "pe_utils.h"
 #include "pe_section.h"
 
 namespace pe_bliss {
